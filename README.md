@@ -33,8 +33,8 @@ Once VRAM headroom is confirmed with `vram_telemetry.ps1` (Dedicated VRAM < 10.8
 
 ## Scripts
 
-- `scripts/download_inkling.py`: Resumable `curl.exe` download of `Mainline_Support/Inkling-2-Mini-UD-Q4_K_XL.gguf_file` (`17,629,760,736` bytes, SHA-256 verified) to `C:\models\Inkling-2-Mini-UD-Q4_K_XL.gguf`.
+- `scripts/download_inkling.py`: Resumable 12-worker parallel HTTP Range downloader for `Mainline_Support/Inkling-2-Mini-UD-Q4_K_XL.gguf_file` (`17,629,760,736` bytes, SHA-256 verified) to `C:\models\Inkling-2-Mini-UD-Q4_K_XL.gguf`.
 - `scripts/upgrade_llama_cpp.ps1`: Backs up `C:\llama.cpp` to `C:\llama.cpp.bak_b12427`, installs mainline `b12615` (`win-vulkan-x64`), preserves local helpers (`start-qwen7b.*`, `llama-connect.exe`), and verifies `llama.exe` + RX 6700 XT Vulkan detection.
-- `scripts/inspect_inkling_tensors.py`: Parses GGUF metadata and tensor byte sizes (works on `.gguf` or active `.gguf.part`) and verifies the exact `-ot` VRAM/DDR4 split.
+- `scripts/inspect_inkling_tensors.py`: Parses GGUF metadata and tensor byte sizes (works on `.gguf` or active `.gguf.part`) and verifies the exact `-ot` VRAM/DDR4 split (`8.10 GiB` VRAM / `8.31 GiB` DDR4).
 - `scripts/launch_inkling.ps1`: Starts `llama-server.exe` with the 8K `q4_0`/`q4_0` loop-pinned profile.
-- `scripts/bench_inkling.ps1`: Runs `llama-bench.exe` (`-p 512 -n 128`) and saves results under `reports/`.
+- `scripts/bench_inkling.ps1`: Runs `llama-bench.exe` (`-p 512 -n 128`, `-ub 256,512` sweep) and saves results under `reports/`.
