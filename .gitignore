@@ -1,0 +1,10 @@
+*.gguf
+*.gguf_file
+*.part
+*.zip
+*.bin
+*.log
+logs/
+__pycache__/
+*.pyc
+.venv/
