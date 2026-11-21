@@ -1,0 +1,160 @@
+{
+  "baseline_mmap_np4": {
+    "timestamp": "2026-11-21T17:26:06-06:00",
+    "model": "C:\\models\\Inkling-2-Mini-UD-Q4_K_XL.gguf",
+    "config": {
+      "ctx": 8192,
+      "cache_type_k": "q4_0",
+      "cache_type_v": "q4_0",
+      "flash_attn": "on",
+      "ot": "blk\\.([0-5]|1[8-9]|2[0-3])\\.ffn_.*_exps\\.=CPU",
+      "mmproj": null
+    },
+    "health_ok": true,
+    "load_seconds": 9.6,
+    "vram_telemetry_loaded": [
+      "[17:26:19] VRAM: 10072.6 MB (82%) | Shared DDR4: 228.6 MB | OK (Pure GDDR6)",
+      "[17:26:22] VRAM: 10096.4 MB (82.2%) | Shared DDR4: 228.6 MB | OK (Pure GDDR6)",
+      "[17:26:25] VRAM: 10118.5 MB (82.3%) | Shared DDR4: 228.8 MB | OK (Pure GDDR6)"
+    ],
+    "chat_wall_seconds": 10.68,
+    "usage": {
+      "completion_tokens": 96,
+      "prompt_tokens": 65,
+      "total_tokens": 161,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 65,
+      "prompt_ms": 3718.023,
+      "prompt_per_token_ms": 57.200353846153845,
+      "prompt_per_second": 17.48240933420799,
+      "predicted_n": 96,
+      "predicted_ms": 6938.764,
+      "predicted_per_token_ms": 73.03962105263157,
+      "predicted_per_second": 13.691199181871584
+    },
+    "finish_reason": "length",
+    "reply_content": "",
+    "reply_reasoning_preview": "The user wants a tiny Python 3 function. Need produce code concise. Need consider safety: hashlib, open path binary. 1 MiB = 1024*1024. Return hexdigest. Could use with open(path,'rb') as f: h=hashlib.sha256(); for chunk in iter(lambda: f.read(1024*1024), b''): h.update(chunk); return",
+    "vram_telemetry_post_chat": [
+      "[17:26:38] VRAM: 10080.5 MB (82%) | Shared DDR4: 295.5 MB | WARNING: Spillover to System RAM detected! Memory bandwidth compromised.",
+      "[17:26:41] VRAM: 10080.5 MB (82%) | Shared DDR4: 295.5 MB | WARNING: Spillover to System RAM detected! Memory bandwidth compromised.",
+      "[17:26:44] VRAM: 10080.5 MB (82%) | Shared DDR4: 295.5 MB | WARNING: Spillover to System RAM detected! Memory bandwidth compromised."
+    ],
+    "server_log_highlights": []
+  },
+  "tuned_no_mmap_np1": {
+    "timestamp": "2026-11-21T17:28:38-06:00",
+    "model": "C:\\models\\Inkling-2-Mini-UD-Q4_K_XL.gguf",
+    "config": {
+      "ctx": 8192,
+      "cache_type_k": "q4_0",
+      "cache_type_v": "q4_0",
+      "flash_attn": "on",
+      "parallel": 1,
+      "load_mode": "none",
+      "ubatch": 512,
+      "log_verbosity": 4,
+      "ot": "blk\\.([0-5]|1[8-9]|2[0-3])\\.ffn_.*_exps\\.=CPU",
+      "mmproj": null
+    },
+    "health_ok": true,
+    "load_seconds": 8.1,
+    "vram_telemetry_loaded": [
+      "[17:28:48] VRAM: 9955.4 MB (81%) | Shared DDR4: 9191.7 MB | WARNING: Spillover to System RAM detected! Memory bandwidth compromised.",
+      "[17:28:51] VRAM: 9955.4 MB (81%) | Shared DDR4: 9191.7 MB | WARNING: Spillover to System RAM detected! Memory bandwidth compromised.",
+      "[17:28:54] VRAM: 9979.1 MB (81.2%) | Shared DDR4: 9191.7 MB | WARNING: Spillover to System RAM detected! Memory bandwidth compromised."
+    ],
+    "chat_wall_seconds": 30.52,
+    "usage": {
+      "completion_tokens": 422,
+      "prompt_tokens": 65,
+      "total_tokens": 487,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 65,
+      "prompt_ms": 1264.786,
+      "prompt_per_token_ms": 19.458246153846154,
+      "prompt_per_second": 51.39209320786283,
+      "predicted_n": 422,
+      "predicted_ms": 29248.299,
+      "predicted_per_token_ms": 69.4733942992874,
+      "predicted_per_second": 14.393999459592504
+    },
+    "finish_reason": "stop",
+    "reply_content": "```python\nimport hashlib\n\ndef sha256_file(path: str) -> str:\n    h = hashlib.sha256()\n    with open(path, 'rb') as f:\n        for chunk in iter(lambda: f.read(1 << 20), b''):\n            h.update(chunk)\n    return h.hexdigest()\n```",
+    "reply_python_syntax_ok": true,
+    "reply_reasoning_preview": "The user asks for a tiny Python 3 function `sha256_file(path: str) -> str` that hashes a file in 1 MiB chunks. This is a benign code request. Need produce direct concise answer. Need consider security: hashing a file path is benign; no harmful details beyond code. Provide code. Need likely include hashlib, os? No need. Need ensure return hex digest. Function should read in 1 MiB chunks. Use `with open(path,'rb') as f:` and `.read(1024*1024)`. Handle exact. Maybe support binary path? Type says st",
+    "vram_telemetry_post_chat": [
+      "[17:29:27] VRAM: 9969.3 MB (81.1%) | Shared DDR4: 9198.1 MB | WARNING: Spillover to System RAM detected! Memory bandwidth compromised.",
+      "[17:29:30] VRAM: 9969.3 MB (81.1%) | Shared DDR4: 9198.1 MB | WARNING: Spillover to System RAM detected! Memory bandwidth compromised.",
+      "[17:29:33] VRAM: 9969.3 MB (81.1%) | Shared DDR4: 9198.1 MB | WARNING: Spillover to System RAM detected! Memory bandwidth compromised."
+    ],
+    "buffer_and_alloc_log": [
+      "-ot:   blk\\.([0-5]|1[8-9]|2[0-3])\\.ffn_.*_exps\\.=CPU",
+      "0.00.105.488 I cmn  common_param:   - Vulkan0 : AMD Radeon RX 6700 XT (12272 MiB, 11474 MiB free)",
+      "0.00.105.497 I cmn  common_param:   - CPU     : AMD Ryzen 5 5600 6-Core Processor               (65436 MiB, 54324 MiB free)",
+      "0.00.105.548 I cmn  common_param: system_info: n_threads = 6 (n_threads_batch = 6) / 12 | CPU : SSE3 = 1 | SSSE3 = 1 | AVX = 1 | AVX2 = 1 | F16C = 1 | FMA = 1 | BMI2 = 1 | LLAMAFILE = 1 | OPENMP = 1 | REPACK = 1 |",
+      "0.00.542.639 I common_memory_breakdown_print: | memory breakdown [MiB]   | total    free    self   model   context   compute    unaccounted |",
+      "0.00.542.644 I common_memory_breakdown_print: |   - Vulkan0 (RX 6700 XT) | 12272 = 11474 + (8984 =  7827 +     146 +    1010) +       -8186 |",
+      "0.00.663.495 I llama_model_loader: - kv   0:                       general.architecture str              = inkling2_loop",
+      "0.00.663.500 I llama_model_loader: - kv   4:                  inkling2_loop.block_count u32              = 24",
+      "0.00.663.500 I llama_model_loader: - kv   5:               inkling2_loop.context_length u32              = 1048576",
+      "0.00.663.501 I llama_model_loader: - kv   6:             inkling2_loop.embedding_length u32              = 2304",
+      "0.00.663.501 I llama_model_loader: - kv   7:          inkling2_loop.feed_forward_length u32              = 1152",
+      "0.00.663.505 I llama_model_loader: - kv   8:         inkling2_loop.attention.head_count arr[i32,24]      = [24, 24, 24, 24, 24, 24, 24, 24, 24, ...",
+      "0.00.663.507 I llama_model_loader: - kv   9:      inkling2_loop.attention.head_count_kv arr[i32,24]      = [8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, ...",
+      "0.00.663.512 I llama_model_loader: - kv  10: inkling2_loop.attention.layer_norm_rms_epsilon f32              = 0.000001",
+      "0.00.663.513 I llama_model_loader: - kv  11:                 inkling2_loop.expert_count u32              = 128",
+      "0.00.663.514 I llama_model_loader: - kv  12:            inkling2_loop.expert_used_count u32              = 8",
+      "0.00.663.514 I llama_model_loader: - kv  13:         inkling2_loop.attention.key_length u32              = 128",
+      "0.00.663.515 I llama_model_loader: - kv  14:       inkling2_loop.attention.value_length u32              = 128",
+      "0.00.663.515 I llama_model_loader: - kv  15:                   inkling2_loop.loop.count u32              = 3",
+      "0.00.663.516 I llama_model_loader: - kv  16:                   inkling2_loop.loop.start u32              = 6",
+      "0.00.663.517 I llama_model_loader: - kv  17:                     inkling2_loop.loop.end u32              = 18",
+      "0.00.663.517 I llama_model_loader: - kv  18:               inkling2_loop.loop.gate_rank u32              = 64",
+      "0.00.663.518 I llama_model_loader: - kv  19:                   inkling2_loop.vocab_size u32              = 201024",
+      "0.00.663.518 I llama_model_loader: - kv  20:          inkling2_loop.vocab_size_unpadded u32              = 200058",
+      "0.00.663.519 I llama_model_loader: - kv  21:   inkling2_loop.expert_feed_forward_length u32              = 1152",
+      "0.00.663.519 I llama_model_loader: - kv  22:     inkling2_loop.attention.key_length_swa u32              = 128",
+      "0.00.663.520 I llama_model_loader: - kv  23:   inkling2_loop.attention.value_length_swa u32              = 128",
+      "0.00.663.520 I llama_model_loader: - kv  24:         inkling2_loop.rope.dimension_count u32              = 0",
+      "0.00.663.520 I llama_model_loader: - kv  25:     inkling2_loop.attention.sliding_window u32              = 1024",
+      "0.00.663.523 I llama_model_loader: - kv  26: inkling2_loop.attention.sliding_window_pattern arr[bool,24]     = [true, true, true, true, true, false,...",
+      "0.00.663.523 I llama_model_loader: - kv  27:            inkling2_loop.shortconv.l_cache u32              = 4",
+      "0.00.663.525 I llama_model_loader: - kv  28:         inkling2_loop.expert_weights_scale f32              = 8.000000",
+      "0.00.663.525 I llama_model_loader: - kv  29:         inkling2_loop.activation.situ_beta f32              = 4.000000",
+      "0.00.663.526 I llama_model_loader: - kv  30:  inkling2_loop.activation.situ_linear_beta f32              = 25.000000",
+      "0.00.663.527 I llama_model_loader: - kv  31:          inkling2_loop.attn_res.block_size u32              = 6",
+      "0.00.663.528 I llama_model_loader: - kv  32:      inkling2_loop.final_logit_softcapping f32              = 30.000000",
+      "0.00.663.528 I llama_model_loader: - kv  33:    inkling2_loop.attention.relative_length u32              = 16",
+      "0.00.663.529 I llama_model_loader: - kv  34:    inkling2_loop.attention.relative_extent u32              = 1024",
+      "0.00.663.530 I llama_model_loader: - kv  35:            inkling2_loop.attention.qk_clip f32              = 22.627417",
+      "0.00.663.530 I llama_model_loader: - kv  36:      inkling2_loop.attention.relative_clip f32              = 8.000000",
+      "0.00.663.531 I llama_model_loader: - kv  37:    inkling2_loop.attention.log_scale_floor u32              = 8192",
+      "0.00.663.532 I llama_model_loader: - kv  38:    inkling2_loop.attention.log_scale_alpha f32              = 0.100000",
+      "0.00.663.553 I llama_model_loader: - kv  62:                 inkling2_loop.loop.varying bool             = false",
+      "0.00.666.010 I llama_prepare_model_devices: using device Vulkan0 (AMD Radeon RX 6700 XT) (unknown id) - 11474 MiB free",
+      "0.00.863.110 I print_info: arch                  = inkling2_loop",
+      "0.02.654.579 I load_tensors: offloaded 49/49 layers to GPU",
+      "0.02.654.584 I load_tensors:      Vulkan0 model buffer size =  7827.31 MiB",
+      "0.02.654.586 I load_tensors:  Vulkan_Host model buffer size =  8974.32 MiB",
+      "0.06.186.159 I llama_context: Vulkan_Host  output buffer size =     0.76 MiB",
+      "0.06.207.460 I llama_kv_cache:    Vulkan0 KV buffer size =    72.00 MiB",
+      "0.06.208.446 I init_rotation:    Vulkan0 rotation buffer size =     0.62 MiB",
+      "0.06.225.742 I llama_kv_cache:    Vulkan0 KV buffer size =    67.50 MiB",
+      "0.06.228.552 I init_rotation:    Vulkan0 rotation buffer size =     3.12 MiB",
+      "0.06.230.329 I llama_memory_recurrent:    Vulkan0 RS buffer size =     3.66 MiB",
+      "0.06.458.060 I sched_reserve:    Vulkan0 compute buffer size =  1010.34 MiB",
+      "0.06.458.068 I sched_reserve: Vulkan_Host compute buffer size =    87.02 MiB"
+    ]
+  }
+}

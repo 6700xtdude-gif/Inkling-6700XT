@@ -1,0 +1,14 @@
+﻿=== Loop-Pinned (-ot blk\.([0-5]|1[8-9]|2[0-3])\.ffn_.*_exps\.=CPU, -ub 256,512) ===
+load_backend: loaded RPC backend from C:\llama.cpp\ggml-rpc.dll
+ggml_vulkan: Found 1 Vulkan devices:
+ggml_vulkan: 0 = AMD Radeon RX 6700 XT (AMD proprietary driver) | uma: 0 | rebar: 1 | fp16: 1 | bf16: 0 | fp4: 0 | warp size: 32 | shared memory: 32768 | int dot: 1 | matrix cores: none
+load_backend: loaded Vulkan backend from C:\llama.cpp\ggml-vulkan.dll
+load_backend: loaded CPU backend from C:\llama.cpp\ggml-cpu-haswell.dll
+| model                          |       size |     params | backend    | ngl | n_ubatch | type_k | type_v |  fa | ot                    |            test |                  t/s |
+| ------------------------------ | ---------: | ---------: | ---------- | --: | -------: | -----: | -----: | --: | --------------------- | --------------: | -------------------: |
+| inkling2_loop ?B Q8_0          |  16.41 GiB |    26.07 B | Vulkan     |  99 |      256 |   q4_0 |   q4_0 |   1 | blk\.([0-5]|1[8-9]|2[0-3])\.ffn_.*_exps\.=CPU |           pp512 |        149.63 ± 5.07 |
+| inkling2_loop ?B Q8_0          |  16.41 GiB |    26.07 B | Vulkan     |  99 |      256 |   q4_0 |   q4_0 |   1 | blk\.([0-5]|1[8-9]|2[0-3])\.ffn_.*_exps\.=CPU |           tg128 |         14.13 ± 0.24 |
+| inkling2_loop ?B Q8_0          |  16.41 GiB |    26.07 B | Vulkan     |  99 |      512 |   q4_0 |   q4_0 |   1 | blk\.([0-5]|1[8-9]|2[0-3])\.ffn_.*_exps\.=CPU |           pp512 |        226.68 ± 1.42 |
+| inkling2_loop ?B Q8_0          |  16.41 GiB |    26.07 B | Vulkan     |  99 |      512 |   q4_0 |   q4_0 |   1 | blk\.([0-5]|1[8-9]|2[0-3])\.ffn_.*_exps\.=CPU |           tg128 |         14.66 ± 0.04 |
+
+build: a818a46f3 (12615)

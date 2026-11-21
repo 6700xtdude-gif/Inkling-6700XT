@@ -10,6 +10,10 @@ param(
     [int]$Ctx = 8192,
     [string]$CacheTypeK = "q4_0",
     [string]$CacheTypeV = "q4_0",
+    [int]$Parallel = 1,
+    [string]$LoadMode = "none",
+    [int]$Ubatch = 512,
+    [int]$LogVerbosity = 3,
     [string]$OverrideTensor = "blk\.([0-5]|1[8-9]|2[0-3])\.ffn_.*_exps\.=CPU"
 )
 
@@ -25,7 +29,7 @@ if (-not (Test-Path $ModelPath)) {
 
 Write-Host "Starting Inkling-2-Mini on http://${BindHost}:$Port" -ForegroundColor Cyan
 Write-Host "  Model: $ModelPath"
-Write-Host "  Ctx:   $Ctx | KV: ${CacheTypeK}/${CacheTypeV} | FlashAttn: on | mmproj: skipped"
+Write-Host "  Ctx:   $Ctx | KV: ${CacheTypeK}/${CacheTypeV} | FlashAttn: on | np=$Parallel | lm=$LoadMode | ub=$Ubatch | mmproj: skipped"
 Write-Host "  -ot:   $OverrideTensor"
 
 & $ServerExe `
@@ -35,6 +39,10 @@ Write-Host "  -ot:   $OverrideTensor"
     -ngl 99 `
     -ot $OverrideTensor `
     -c $Ctx `
+    -np $Parallel `
+    -lm $LoadMode `
+    -ub $Ubatch `
+    -lv $LogVerbosity `
     -fa on `
     --cache-type-k $CacheTypeK `
     --cache-type-v $CacheTypeV `
