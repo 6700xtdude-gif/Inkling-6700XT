@@ -18,6 +18,7 @@ import time
 import urllib.error
 import urllib.request
 from pathlib import Path
+from urllib.parse import urlparse
 
 URL = (
     "https://huggingface.co/unsloth/Inkling-2-Mini-GGUF/resolve/main/"
@@ -29,6 +30,38 @@ EXPECTED_SHA256 = "e64276656f072e9b2197a61723667cbdb71da66a716ffd966e572c21088f3
 DEST_PATH = Path(r"C:\models\Inkling-2-Mini-UD-Q4_K_XL.gguf")
 PART_PATH = Path(r"C:\models\Inkling-2-Mini-UD-Q4_K_XL.gguf.part")
 STATE_PATH = Path(r"C:\models\Inkling-2-Mini-UD-Q4_K_XL.gguf.chunks.json")
+
+
+def load_hf_token() -> str:
+    for env_name in ("HF_TOKEN", "HUGGING_FACE_HUB_TOKEN", "HUGGINGFACE_HUB_TOKEN"):
+        val = os.environ.get(env_name, "").strip()
+        if val:
+            return val
+    for tok_path in (Path.home() / ".cache" / "huggingface" / "token", Path.home() / ".huggingface" / "token"):
+        if tok_path.is_file():
+            try:
+                val = tok_path.read_text(encoding="utf-8", errors="ignore").strip()
+                if val:
+                    return val
+            except OSError:
+                pass
+    return ""
+
+
+class SafeAuthRedirectHandler(urllib.request.HTTPRedirectHandler):
+    """Strip Authorization header when redirecting off huggingface.co to CDN presigned URLs."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        new_req = super().redirect_request(req, fp, code, msg, headers, newurl)
+        if new_req is None:
+            return None
+        new_host = (urlparse(newurl).hostname or "").lower()
+        if not (new_host == "huggingface.co" or new_host.endswith(".huggingface.co")):
+            for hdr_dict in (new_req.headers, new_req.unredirected_hdrs):
+                for key in list(hdr_dict.keys()):
+                    if key.lower() == "authorization":
+                        del hdr_dict[key]
+        return new_req
 
 
 def chunk_bounds(idx: int, chunk_bytes: int, total_bytes: int = EXPECTED_BYTES) -> tuple[int, int, int]:
@@ -166,8 +199,12 @@ def main() -> int:
     initial_done_bytes = total_bytes_for_chunks(completed_set, chunk_bytes)
     remaining = [idx for idx in range(total_chunks) if idx not in completed_set]
 
+    hf_token = load_hf_token()
+    opener = urllib.request.build_opener(SafeAuthRedirectHandler())
+
     print(
         f"Starting {args.workers}-worker parallel Range download -> {PART_PATH}\n"
+        f"  HF Auth: {'authenticated (token loaded)' if hf_token else 'anonymous'}\n"
         f"  Source: {URL}\n"
         f"  Target: {EXPECTED_BYTES:,} B ({EXPECTED_BYTES / 1024**3:.2f} GiB / {EXPECTED_BYTES / 1e9:.2f} GB)\n"
         f"  Chunk size: {args.chunk_mb} MiB ({total_chunks} total chunks)\n"
@@ -200,14 +237,14 @@ def main() -> int:
                     in_flight_map[idx] = 0
                 written = 0
                 try:
-                    req = urllib.request.Request(
-                        URL,
-                        headers={
-                            "User-Agent": "ENDO-Inkling-Downloader/2.0",
-                            "Range": f"bytes={start}-{end}",
-                        },
-                    )
-                    with urllib.request.urlopen(req, timeout=45) as resp:
+                    hdrs = {
+                        "User-Agent": "ENDO-Inkling-Downloader/2.0",
+                        "Range": f"bytes={start}-{end}",
+                    }
+                    if hf_token:
+                        hdrs["Authorization"] = f"Bearer {hf_token}"
+                    req = urllib.request.Request(URL, headers=hdrs)
+                    with opener.open(req, timeout=45) as resp:
                         status = getattr(resp, "status", 200)
                         if status == 200 and expected_len != EXPECTED_BYTES:
                             raise IOError(f"Server ignored Range header on chunk {idx} (HTTP 200)")
