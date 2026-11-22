@@ -1,0 +1,69 @@
+{
+    "$schema": "https://pi.dev/schemas/models.schema.json",
+    "providers": {
+        "local-llama-router": {
+            "name": "Local llama.cpp router (C:\\models)",
+            "baseUrl": "http://127.0.0.1:9931/v1",
+            "api": "openai-completions",
+            "apiKey": "local",
+            "models": [
+                {
+                    "id": "Inkling-2-Mini-UD-Q4_K_XL",
+                    "name": "Inkling-2-Mini-UD-Q4_K_XL (Loop-Pinned 32K)",
+                    "reasoning": true,
+                    "input": [
+                        "text"
+                    ],
+                    "contextWindow": 32768,
+                    "maxTokens": 4096,
+                    "compat": {
+                        "supportsReasoningEffort": true,
+                        "maxTokensField": "max_tokens"
+                    },
+                    "thinkingLevelMap": {
+                        "off": "none",
+                        "minimal": "minimal",
+                        "low": "low",
+                        "medium": "medium",
+                        "high": "high",
+                        "xhigh": "xhigh"
+                    },
+                    "cost": {
+                        "input": 0,
+                        "output": 0,
+                        "cacheRead": 0,
+                        "cacheWrite": 0
+                    }
+                },
+                {
+                    "id": "Inkling-2-Mini-UD-Q3_K_XL",
+                    "name": "Inkling-2-Mini-UD-Q3_K_XL (Loop-Pinned 32K)",
+                    "reasoning": true,
+                    "input": [
+                        "text"
+                    ],
+                    "contextWindow": 32768,
+                    "maxTokens": 4096,
+                    "compat": {
+                        "supportsReasoningEffort": true,
+                        "maxTokensField": "max_tokens"
+                    },
+                    "thinkingLevelMap": {
+                        "off": "none",
+                        "minimal": "minimal",
+                        "low": "low",
+                        "medium": "medium",
+                        "high": "high",
+                        "xhigh": "xhigh"
+                    },
+                    "cost": {
+                        "input": 0,
+                        "output": 0,
+                        "cacheRead": 0,
+                        "cacheWrite": 0
+                    }
+                }
+            ]
+        }
+    }
+}
