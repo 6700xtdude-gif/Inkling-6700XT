@@ -49,9 +49,9 @@ Verified local artifacts tested in this baseline:
 
 What this means for reading the results:
 
-- **No claim is made here about image understanding, OCR, or screenshot reading.** Vision is `hypothesis` / untested on this hardware.
-- **Vision does not fit the current 32K configuration.** The smallest projector (`F16`) adds `610 MiB` of VRAM plus image-token prefill cost. At 32K, `UD-Q4_K_XL` already peaks at `11,425 MB` of `12,272 MB` (Section 4), so enabling vision would require deeper CPU expert offload or a smaller context window.
-- If vision ever gets tested, it must be a separate benchmark row with the projector noted - never blended into the text-only tables above.
+- **No vision path. Decision, not an untested gap.** 6700XT ruled on 2026-11-21: this repo stays text-only. No `mmproj` will be downloaded or wired up, so image understanding, OCR, and screenshot reading are **out of scope** and no claim is made about them.
+- **Vision would not fit the current 32K configuration anyway.** The smallest projector (`F16`) adds `610 MiB` of VRAM plus image-token prefill cost. At 32K, `UD-Q4_K_XL` already peaks at `11,425 MB` of `12,272 MB` (Section 4), so enabling vision would require deeper CPU expert offload or a smaller context window.
+- If that decision is ever revisited, it must arrive as a separate benchmark row with the projector noted - never blended into the text-only tables above.
 
 ---
 
@@ -139,6 +139,33 @@ Sampled every 2 s during each sweep ([gpu_vram_depth_20261121_215044.csv](report
 
 **Verdict:** the `32K` server configuration reaches only `~10.2 GB` (Section 4) because it runs `-np 1` with its own buffer sizing, but `llama-bench` allocates the full depth for every test and pushes Q4 past the Windows headroom line at both ubatch sizes. Treat **Q4 `d32768` cells as indicative, not clean**: they ran at `~93%` dedicated VRAM with measurable spill, and no `-ub`/offload combination tried here brings them under `11,059 MB`. Q3 at `32K` stays inside the envelope and its depth curve should be the trusted one for long-session planning.
 
+### Practical Warm-Up Test - Real First-Token Latency (Live Server)
+
+The synthetic sweep answers "how fast is prefill at depth N". It does not answer what decides whether a long session is usable: **how long until the first token, and what does the next turn cost.** Measured against a live `llama-server` (`-c 32768`, `q4_0`/`q4_0`, `-np 1`, `-lm none`, `-ub 512`, loop-pinned `-ot`, `UD-Q4_K_XL`) via [warmup_test.py](scripts/warmup_test.py). Every figure below is the server's own `timings` block - nothing hand-timed. `prompt_n` is what the server actually tokenized, which ran under the requested sizes.
+
+| Prompt tokens (actual) | Cold prefill | Cold prefill rate | Identical repeat | New turn on cached prefix | Decode |
+| --- | --- | --- | --- | --- | --- |
+| `1,394` | `9.49 s` | `146.8 tok/s` | `0.18 s` (`4` tok) | `1.15 s` (`17` tok) | `14.31 tok/s` |
+| `5,369` | `37.57 s` | `142.9 tok/s` | `0.18 s` (`4` tok) | `0.64 s` (`17` tok) | `14.16 tok/s` |
+| `10,722` | `88.38 s` | `121.3 tok/s` | `0.18 s` (`4` tok) | `0.70 s` (`17` tok) | `13.84 tok/s` |
+| `19,626` | `204.78 s` | `95.8 tok/s` | `0.19 s` (`4` tok) | `0.78 s` (`17` tok) | `13.73 tok/s` |
+
+Report: [warmup_20261121_224721.json](reports/warmup_20261121_224721.json).
+
+- **A cold session at ~20K tokens costs 3m 25s before the first token.** That is the true price of long context, and it scales roughly with prompt length rather than decode speed.
+- **Prefix cache removes essentially all of it.** An identical repeat prefills `4` tokens in `0.18 s` - a `~1,100x` prefill reduction.
+- **The realistic agent turn costs under a second.** Appending one question to a cached `19,626`-token conversation prefills `17` tokens in `0.78 s`. This is the number that matters, and it is **flat across depth** (`0.64-1.15 s`), so an established long session is not slower per turn than a short one.
+- **Two independent methods agree on decode.** `14.31 -> 13.73 tok/s` here versus `14.69 -> 14.09` from `llama-bench` - the flat-generation finding reproduces outside the benchmark harness.
+- **Prefill rates here look better than `llama-bench`'s `pp512 @ d32768` (`42 tok/s`) by design.** That row measures `512` new tokens with `32K` of context already resident - the worst-case attention position. These numbers are whole-prompt fills averaged from empty. The two are not comparable and both are correct.
+
+**Engineering consequences (these are the actionable ones):**
+
+1. **Never restart the server mid-session** if you can avoid it - a reload throws away a multi-minute prefill.
+2. **Any edit to the system prompt or tool list invalidates the entire cached prefix**, because both sit at the front of the prompt. Swapping `AGENTS.md` or adding a tool mid-session drops you into the cold column above.
+3. **`pi`'s `contextWindow` must match the server's `-c`.** A mismatch forces re-tokenization and defeats the cache.
+
+**Server footprint (`observed`, per-process):** with a `19,626`-token context resident, `llama-server` owns `10,615 MB` of dedicated VRAM - `444 MB` inside the `11,059 MB` target - while all other processes hold `~960 MB`, for `11,576 MB` total on the adapter. The earlier `10,187-10,199 MB` figure in Section 4 was total-adapter during the router smoke test; this per-process measurement is the stricter and more useful one.
+
 **8K `Vulkan0` buffer breakdown (`UD-Q4_K_XL`, `q4_0`/`q4_0`, `-np 1 -lm none -ub 512`):**
 `7,827 MiB` model + `146 MiB` KV/RS context + `1,010 MiB` compute = **`8,984 MiB`** (`~9,969 MB` total dedicated VRAM including Windows desktop; full `-lv 4` breakdown in [smoke_test_8k_q4kv.json](reports/smoke_test_8k_q4kv.json)).
 
@@ -224,3 +251,5 @@ Full per-turn tool counts, `cacheRead` tokens, prompt/gen timings, and VRAM tele
 | [reports/llama_bench_20261121_220739.txt](reports/llama_bench_20261121_220739.txt) | Depth sweep - `UD-Q3_K_XL`, `-d 0,4096,8192,16384,32768` |
 | [reports/llama_bench_20261121_222347.txt](reports/llama_bench_20261121_222347.txt) | `UD-Q4_K_XL` at `d32768` with `-ub 256` (VRAM recheck) |
 | [reports/gpu_vram_depth_20261121_215044.csv](reports/gpu_vram_depth_20261121_215044.csv) | 2 s VRAM samples across all depth runs (851 rows) |
+| [scripts/warmup_test.py](scripts/warmup_test.py) | Live-server first-token latency + prefix-cache reuse ladder |
+| [reports/warmup_20261121_224721.json](reports/warmup_20261121_224721.json) | Warm-up ladder: cold / repeat / new-turn at 1.4K-19.6K tokens |
