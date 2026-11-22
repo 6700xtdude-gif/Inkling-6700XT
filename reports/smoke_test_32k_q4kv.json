@@ -1,0 +1,163 @@
+{
+  "timestamp": "2026-11-21T18:36:48-06:00",
+  "client_host": "3D2A-STUDIO",
+  "server_host": "SANDBOX",
+  "router_endpoint": "http://10.10.10.1:9931/v1",
+  "llama_cpp_build": "b12615 (a818a46f3, PR #32704 included)",
+  "preset_config": {
+    "ctx_size": 32768,
+    "cache_type_k": "q4_0",
+    "cache_type_v": "q4_0",
+    "flash_attn": "on",
+    "n_gpu_layers": 99,
+    "parallel": 1,
+    "load_mode": "none",
+    "ubatch_size": 512,
+    "override_tensor": "blk\\.([0-5]|1[8-9]|2[0-3])\\.ffn_.*_exps\\.=CPU",
+    "reasoning_effort": "low",
+    "reasoning_budget": 1024,
+    "no_reasoning_preserve": true,
+    "temp": 1.0,
+    "top_p": 1.0,
+    "top_k": 0,
+    "min_p": 0.0
+  },
+  "pi_client_config": {
+    "thinking": "low",
+    "contextWindow": 32768,
+    "maxTokens": 4096,
+    "session_mode": "multi-turn sequential across prompts 1 -> 2 -> 3"
+  },
+  "runs": [
+    {
+      "model": "Inkling-2-Mini-UD-Q3_K_XL",
+      "file": "C:\\models\\Inkling-2-Mini-UD-Q3_K_XL.gguf",
+      "vram_telemetry": {
+        "physical_vram_mb": 12288,
+        "dedicated_vram_mb_samples": [9592.6, 9588.1, 9585.6, 9589.6, 9589.6],
+        "dedicated_vram_pct_samples": [78.1, 78.0, 78.0, 78.0, 78.0],
+        "shared_ddr4_mb": 5831.1,
+        "note": "Shared DDR4 reflects intentional Vulkan_Host CPU/DDR4 offload with -lm none; ~2.7 GB dedicated GDDR6 free.",
+        "vulkan0_compute_buffer_mib_on_unload": 697.2859
+      },
+      "turns": [
+        {
+          "test_id": 1,
+          "name": "Hostname Grounding",
+          "wall_time_s": 27.6,
+          "includes_cold_load": true,
+          "powershell_calls": 1,
+          "tool_errors": 0,
+          "peak_total_tokens": 2185,
+          "cache_read_tokens": 2129,
+          "stop_reason": "stop",
+          "server_truncated": 0,
+          "prompt_eval_tok_s": 159.72,
+          "gen_tok_s_range": [15.12, 15.15],
+          "grade": "PASS",
+          "answer_summary": "3D2A-STUDIO"
+        },
+        {
+          "test_id": 2,
+          "name": "Windows Event Log Unique Errors",
+          "wall_time_s": 65.82,
+          "includes_cold_load": false,
+          "powershell_calls": 1,
+          "tool_errors": 0,
+          "peak_total_tokens": 6859,
+          "cache_read_tokens": 2475,
+          "stop_reason": "stop",
+          "server_truncated": 0,
+          "prompt_eval_tok_s": 122.38,
+          "gen_tok_s_range": [15.03, 15.17],
+          "grade": "PASS",
+          "answer_summary": "3 recent unique System errors (Event IDs 7023, 2042, 10010 on 11/21/2026)"
+        },
+        {
+          "test_id": 3,
+          "name": "Local Hardware & Driver Health",
+          "wall_time_s": 92.61,
+          "includes_cold_load": false,
+          "powershell_calls": 3,
+          "tool_errors": 0,
+          "peak_total_tokens": 10156,
+          "cache_read_tokens": 9400,
+          "stop_reason": "stop",
+          "server_truncated": 0,
+          "prompt_eval_tok_s": 101.63,
+          "gen_tok_s_range": [14.92, 15.01],
+          "grade": "PASS (partial oldest-driver table)",
+          "answer_summary": "i3-10100F, RX 570, ~15.87 GB RAM; Error PnP devices SM Bus Controller & Intel Wireless Bluetooth; 5 unsigned/blank-name entries; honestly reported blank DriverDate instead of guessing"
+        }
+      ],
+      "total_wall_time_s": 186.03,
+      "peak_session_tokens": 10156,
+      "truncation_count": 0
+    },
+    {
+      "model": "Inkling-2-Mini-UD-Q4_K_XL",
+      "file": "C:\\models\\Inkling-2-Mini-UD-Q4_K_XL.gguf",
+      "dynamic_swap_from": "Inkling-2-Mini-UD-Q3_K_XL",
+      "vram_telemetry": {
+        "physical_vram_mb": 12288,
+        "dedicated_vram_mb_samples": [10199.3, 10189.0, 10186.5, 10190.5, 10190.5],
+        "dedicated_vram_pct_samples": [83.0, 82.9, 82.9, 82.9, 82.9],
+        "shared_ddr4_mb": 9319.8,
+        "note": "Stays under ~10.8 GB WDDM ceiling (~2.09 GB free); Shared DDR4 reflects intentional Vulkan_Host CPU/DDR4 offload with -lm none."
+      },
+      "turns": [
+        {
+          "test_id": 1,
+          "name": "Hostname Grounding",
+          "wall_time_s": 27.49,
+          "includes_cold_load": true,
+          "powershell_calls": 1,
+          "tool_errors": 0,
+          "peak_total_tokens": 2133,
+          "cache_read_tokens": 2098,
+          "stop_reason": "stop",
+          "server_truncated": 0,
+          "prompt_eval_tok_s": 151.88,
+          "gen_tok_s_range": [13.90, 14.18],
+          "grade": "PASS",
+          "answer_summary": "3D2A-STUDIO"
+        },
+        {
+          "test_id": 2,
+          "name": "Windows Event Log Unique Errors",
+          "wall_time_s": 143.63,
+          "includes_cold_load": false,
+          "powershell_calls": 7,
+          "tool_errors": 2,
+          "peak_total_tokens": 4921,
+          "cache_read_tokens": 4296,
+          "stop_reason": "stop",
+          "server_truncated": 0,
+          "prompt_eval_tok_s": 108.16,
+          "gen_tok_s_range": [14.19, 14.38],
+          "grade": "PASS (self-corrected Get-WinEvent syntax)",
+          "answer_summary": "3 recent unique System errors (Event IDs 7023, 2042, 10010 on 11/21/2026)"
+        },
+        {
+          "test_id": 3,
+          "name": "Local Hardware & Driver Health",
+          "wall_time_s": 124.86,
+          "includes_cold_load": false,
+          "powershell_calls": 8,
+          "tool_errors": 0,
+          "peak_total_tokens": 7964,
+          "cache_read_tokens": 7465,
+          "stop_reason": "stop",
+          "server_truncated": 0,
+          "prompt_eval_tok_s": 109.6,
+          "gen_tok_s_range": [14.21, 14.40],
+          "grade": "PASS (partial oldest-driver table)",
+          "answer_summary": "i3-10100F, RX 570, ~15.9 GB RAM; ~55 non-OK PnP devices highlighting Error SM Bus Controller, Intel Wireless Bluetooth, PCI Device; noted blank DriverDate rows sorted first without guessing"
+        }
+      ],
+      "total_wall_time_s": 295.98,
+      "peak_session_tokens": 7964,
+      "truncation_count": 0
+    }
+  ]
+}
