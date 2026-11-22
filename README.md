@@ -69,6 +69,24 @@ Using naive `--n-cpu-moe 12` evicts `blk.0..11` to DDR4 — putting half of the 
 | **`UD-Q4_K_XL`** | `149.63 ± 5.07 t/s` | `14.13 ± 0.24 t/s` | **`226.68 ± 1.42 t/s`** | **`14.66 ± 0.04 t/s`** | [llama_bench_20261121_172954.txt](reports/llama_bench_20261121_172954.txt) |
 | **`UD-Q3_K_XL`** | `186.72 ± 0.16 t/s` | `15.46 ± 0.05 t/s` | **`245.62 ± 0.82 t/s`** | **`15.43 ± 0.09 t/s`** | [llama_bench_20261121_173108.txt](reports/llama_bench_20261121_173108.txt) |
 
+### Reproduction Run - 2026-11-21 21:35 Local (Idle GPU, No Server Resident)
+
+Repeat of the exact committed sweep, with the live `llama-server` stopped and GPU memory sampled every 2 s. Pre-flight: port 9931 closed, no `llama*` process, idle dedicated VRAM `1,171 MB`, build still `b12615` (`a818a46f3`).
+
+Weights were re-hashed before the run and are **identical** to the table in Section 2 (`e6427665...` Q4, `e2d03e8c...` Q3), so this is the same model, same build, same flags:
+
+| Model Quant | `-ub 256` `pp512` | `-ub 256` `tg128` | `-ub 512` `pp512` | `-ub 512` `tg128` | Report |
+| --- | --- | --- | --- | --- | --- |
+| **`UD-Q4_K_XL`** (run 1) | `172.05 +/- 4.55 t/s` | `15.48 +/- 0.17 t/s` | `234.09 +/- 3.18 t/s` | `15.50 +/- 0.15 t/s` | [llama_bench_20261121_213537.txt](reports/llama_bench_20261121_213537.txt) |
+| **`UD-Q4_K_XL`** (run 2) | `169.27 +/- 2.56 t/s` | `15.42 +/- 0.20 t/s` | `230.81 +/- 8.21 t/s` | `15.76 +/- 0.08 t/s` | [llama_bench_20261121_213909.txt](reports/llama_bench_20261121_213909.txt) |
+| **`UD-Q3_K_XL`** | `193.24 +/- 0.41 t/s` | `16.20 +/- 0.09 t/s` | `250.75 +/- 4.91 t/s` | `16.16 +/- 0.24 t/s` | [llama_bench_20261121_213716.txt](reports/llama_bench_20261121_213716.txt) |
+
+**Delta versus the original 17:29 / 17:31 baseline (same build, same weights):** every cell is faster, and the two independent Q4 runs agree within noise. Gain by cell (`ub 256` / `ub 512`): `pp` `+15.0%` / `+3.3%` (Q4), `+3.5%` / `+2.1%` (Q3); `tg` `+9.6%` / `+5.7%` (Q4), `+4.8%` / `+4.7%` (Q3).
+
+- **`observed`:** the original baseline was measured on the same `b12615` build and the same GGUF bytes, so the gap is not a model or engine change. For clean-GPU runs, the honest top-line figure is **`15.4-16.2 tok/s` generation**, not `14-15`.
+- **`hypothesis` (not verified):** the earlier run was slower because of GPU-side contention, most likely the live smoke-test `llama-server` still resident seconds before the `17:29:54` baseline run (last log line `17:29:25`), and/or Defender/disk activity on the freshly written `16.4 GiB` file. The old run cannot be re-tested after the fact.
+- **Peak dedicated VRAM during the sweep:** `9,746 MB` (`Q4`) and `9,441 MB` (`Q3`) of `12,272 MB`; sampled *Shared* usage stayed at `~112 MB`, so **no WDDM spillover** occurred. Note these are `llama-bench` allocations (default context) and are not directly comparable to the `32K` server figures below.
+
 **8K `Vulkan0` buffer breakdown (`UD-Q4_K_XL`, `q4_0`/`q4_0`, `-np 1 -lm none -ub 512`):**
 `7,827 MiB` model + `146 MiB` KV/RS context + `1,010 MiB` compute = **`8,984 MiB`** (`~9,969 MB` total dedicated VRAM including Windows desktop; full `-lv 4` breakdown in [smoke_test_8k_q4kv.json](reports/smoke_test_8k_q4kv.json)).
 
@@ -146,3 +164,7 @@ Full per-turn tool counts, `cacheRead` tokens, prompt/gen timings, and VRAM tele
 | [reports/llama_bench_20261121_173108.txt](reports/llama_bench_20261121_173108.txt) | `llama-bench` output — `UD-Q3_K_XL` (`-ub 256,512`) |
 | [reports/tensor_layout.json](reports/tensor_layout.json) | Verified GGUF tensor split (`UD-Q4_K_XL`) |
 | [reports/tensor_layout_q3.json](reports/tensor_layout_q3.json) | Verified GGUF tensor split (`UD-Q3_K_XL`) |
+| [reports/llama_bench_20261121_213537.txt](reports/llama_bench_20261121_213537.txt) | Clean-GPU reproduction - `UD-Q4_K_XL` (run 1) |
+| [reports/llama_bench_20261121_213909.txt](reports/llama_bench_20261121_213909.txt) | Clean-GPU reproduction - `UD-Q4_K_XL` (run 2, stability check) |
+| [reports/llama_bench_20261121_213716.txt](reports/llama_bench_20261121_213716.txt) | Clean-GPU reproduction - `UD-Q3_K_XL` |
+| [reports/gpu_vram_20261121_213530.csv](reports/gpu_vram_20261121_213530.csv) | 2 s dedicated/shared VRAM samples across the reproduction sweep |
