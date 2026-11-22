@@ -4,6 +4,8 @@
 
 This repository documents the exact Windows 11 Vulkan setup, loop-aware `-ot` tensor offload strategy, `llama.cpp` router preset, `pi` client config, benchmarks, and live multi-turn agent smoke tests for running Thinking Machines Lab's **Inkling 2 Mini** (`unsloth/Inkling-2-Mini-GGUF`, `Mainline_Support` `UD-Q4_K_XL` and `UD-Q3_K_XL`) on a **12 GB AMD Radeon RX 6700 XT**.
 
+> **Scope of every number on this page:** text-only. Inkling 2 Mini also accepts images upstream, but no `mmproj` vision projector is loaded anywhere here - see [Section 2](#modality-scope---text-only-runs-on-a-vision-capable-model). Under clean-GPU conditions the measured generation rate is **`15.4-16.2 tok/s`** (Section 4), which supersedes the `~14-15 tok/s` figure in the verdict line above.
+
 ---
 
 ## 1. Test Hardware & Software Stack
@@ -33,6 +35,23 @@ Verified local artifacts tested in this baseline:
 | **`UD-Q3_K_XL`** *(32K / fast option)* | `Mainline_Support` | `13,631,779,296 B` (`12.70 GiB`) | `e2d03e8c92ac21cff0e3309b95f40dfd27d1825184f0d2bc09db249797273639` |
 
 *(No `mmproj` vision projector was loaded so the full GDDR6 headroom goes to looped experts, KV cache, and compute buffers.)*
+
+### Modality Scope - Text-Only Runs on a Vision-Capable Model
+
+**Inkling 2 Mini is natively image+text. Every number in this repository is text-only.**
+
+| Aspect | Status |
+| --- | --- |
+| Upstream capability (`documented`) | `unsloth/Inkling-2-Mini-GGUF` is tagged `pipeline_tag: image-text-to-text`; the published chat template accepts `image` / `input_image` / `image_url` parts and raises on audio (*"Inkling 2 does not accept audio input"*) |
+| Vision weights | Shipped as separate projectors: `mmproj-F32.gguf` (`1,273,048,512 B`), `mmproj-BF16.gguf` (`641,805,760 B`), `mmproj-F16.gguf` (`639,348,160 B`). **None downloaded, none loaded.** |
+| Text GGUF | `general.architecture = inkling2_loop`, `744` tensors, no vision encoder inside - the projector is the only path to image input |
+| Benchmarks / smoke tests | `observed` text-only: every `llama-bench` / `llama-server` invocation in this repo omits `--mmproj`, and [launch_inkling.ps1](scripts/launch_inkling.ps1) logs `mmproj: skipped` |
+
+What this means for reading the results:
+
+- **No claim is made here about image understanding, OCR, or screenshot reading.** Vision is `hypothesis` / untested on this hardware.
+- **Vision does not fit the current 32K configuration.** The smallest projector (`F16`) adds `610 MiB` of VRAM plus image-token prefill cost. At 32K, `UD-Q4_K_XL` already peaks at `11,425 MB` of `12,272 MB` (Section 4), so enabling vision would require deeper CPU expert offload or a smaller context window.
+- If vision ever gets tested, it must be a separate benchmark row with the projector noted - never blended into the text-only tables above.
 
 ---
 
@@ -86,6 +105,39 @@ Weights were re-hashed before the run and are **identical** to the table in Sect
 - **`observed`:** the original baseline was measured on the same `b12615` build and the same GGUF bytes, so the gap is not a model or engine change. For clean-GPU runs, the honest top-line figure is **`15.4-16.2 tok/s` generation**, not `14-15`.
 - **`hypothesis` (not verified):** the earlier run was slower because of GPU-side contention, most likely the live smoke-test `llama-server` still resident seconds before the `17:29:54` baseline run (last log line `17:29:25`), and/or Defender/disk activity on the freshly written `16.4 GiB` file. The old run cannot be re-tested after the fact.
 - **Peak dedicated VRAM during the sweep:** `9,746 MB` (`Q4`) and `9,441 MB` (`Q3`) of `12,272 MB`; sampled *Shared* usage stayed at `~112 MB`, so **no WDDM spillover** occurred. Note these are `llama-bench` allocations (default context) and are not directly comparable to the `32K` server figures below.
+
+### Depth Sweep - How the 32K Window Actually Behaves
+
+One `llama-bench` invocation per quant with `-d 0,4096,8192,16384,32768`, `-ub 512`, `q4_0`/`q4_0`, `-fa 1`, `-p 512 -n 128`, `r=3`, loop-pinned `-ot`. This is the measurement the baseline was missing: every earlier number in this repo was depth `0`.
+
+| Depth | Q4 `pp512` | Q4 `tg128` | Q3 `pp512` | Q3 `tg128` |
+| --- | --- | --- | --- | --- |
+| `0` | `221.35 +/- 1.97` | `14.69 +/- 0.13` | `250.68 +/- 2.64` | `16.31 +/- 0.04` |
+| `4,096` | `121.87 +/- 0.45` | `14.76 +/- 0.04` | `128.20 +/- 0.25` | `15.89 +/- 0.20` |
+| `8,192` | `99.40 +/- 0.25` | `14.60 +/- 0.03` | `101.68 +/- 0.31` | `15.15 +/- 0.05` |
+| `16,384` | `72.66 +/- 0.22` | `14.23 +/- 0.02` | `74.19 +/- 0.17` | `14.87 +/- 0.04` |
+| `32,768` | `41.96 +/- 0.12` | `14.09 +/- 0.09` | `43.63 +/- 0.10` | `14.21 +/- 0.02` |
+
+Reports: [Q4](reports/llama_bench_20261121_215044.txt) / [Q3](reports/llama_bench_20261121_220739.txt).
+
+- **Generation is nearly depth-invariant.** Q4 loses only `4.1%` (`14.69 -> 14.09`) across the full window, which matches the looped-expert cost model: per-token compute is dominated by the `12` looped layers, not by attention span. This is why long `pi` sessions feel steady once loaded.
+- **Prompt processing collapses `5.3x`.** `221 -> 42` tok/s means re-reading `2,000` tokens at `32K` depth costs roughly `48 s` before the first output token. Prefix-cache reuse matters far more than raw `tg` for agent work.
+- **Q3 degrades more at depth than Q4** (`16.31 -> 14.21`, `-12.9%` vs `-4.1%`). At `32K` the two quants are effectively tied at `~14.1 tok/s`, so Q3's `1.6 tok/s` advantage at depth `0` disappears exactly where long sessions live. Q3's real advantage is VRAM headroom, not speed.
+- **Do not compare `-d 0` across run types.** In-list Q4 depth `0` reads `221.35` against `234.09` standalone (`~5%` gap), while Q3 is unchanged (`250.68` vs `250.75`). Passing a depth list makes `llama-bench` size the full `32K` context for every test, which shifts compute buffers for the larger quant. Only rows within one depth-list run are mutually comparable.
+
+#### VRAM at 32K Is Over Target for Q4 (`observed`)
+
+Sampled every 2 s during each sweep ([gpu_vram_depth_20261121_215044.csv](reports/gpu_vram_depth_20261121_215044.csv)); `12,272 MB` total dedicated:
+
+| Sweep | Peak dedicated | Peak shared | vs `11,059 MB` target |
+| --- | --- | --- | --- |
+| Q4 (`-ub 512`) | `11,425 MB` | `2,416 MB` | **over by ~366 MB** |
+| Q4 (`-ub 256`, `d32768` only) | `11,226 MB` | `701 MB` | **over by ~167 MB** |
+| Q3 (`-ub 512`) | `10,826 MB` | `2,299 MB` | under by ~233 MB |
+
+`-ub 256` at depth `32K` returns `pp512 44.45 +/- 0.09` and `tg128 13.69 +/- 0.03` ([report](reports/llama_bench_20261121_222347.txt)) - `pp` marginally better, `tg` marginally worse, and less spill.
+
+**Verdict:** the `32K` server configuration reaches only `~10.2 GB` (Section 4) because it runs `-np 1` with its own buffer sizing, but `llama-bench` allocates the full depth for every test and pushes Q4 past the Windows headroom line at both ubatch sizes. Treat **Q4 `d32768` cells as indicative, not clean**: they ran at `~93%` dedicated VRAM with measurable spill, and no `-ub`/offload combination tried here brings them under `11,059 MB`. Q3 at `32K` stays inside the envelope and its depth curve should be the trusted one for long-session planning.
 
 **8K `Vulkan0` buffer breakdown (`UD-Q4_K_XL`, `q4_0`/`q4_0`, `-np 1 -lm none -ub 512`):**
 `7,827 MiB` model + `146 MiB` KV/RS context + `1,010 MiB` compute = **`8,984 MiB`** (`~9,969 MB` total dedicated VRAM including Windows desktop; full `-lv 4` breakdown in [smoke_test_8k_q4kv.json](reports/smoke_test_8k_q4kv.json)).
@@ -168,3 +220,7 @@ Full per-turn tool counts, `cacheRead` tokens, prompt/gen timings, and VRAM tele
 | [reports/llama_bench_20261121_213909.txt](reports/llama_bench_20261121_213909.txt) | Clean-GPU reproduction - `UD-Q4_K_XL` (run 2, stability check) |
 | [reports/llama_bench_20261121_213716.txt](reports/llama_bench_20261121_213716.txt) | Clean-GPU reproduction - `UD-Q3_K_XL` |
 | [reports/gpu_vram_20261121_213530.csv](reports/gpu_vram_20261121_213530.csv) | 2 s dedicated/shared VRAM samples across the reproduction sweep |
+| [reports/llama_bench_20261121_215044.txt](reports/llama_bench_20261121_215044.txt) | Depth sweep - `UD-Q4_K_XL`, `-d 0,4096,8192,16384,32768` |
+| [reports/llama_bench_20261121_220739.txt](reports/llama_bench_20261121_220739.txt) | Depth sweep - `UD-Q3_K_XL`, `-d 0,4096,8192,16384,32768` |
+| [reports/llama_bench_20261121_222347.txt](reports/llama_bench_20261121_222347.txt) | `UD-Q4_K_XL` at `d32768` with `-ub 256` (VRAM recheck) |
+| [reports/gpu_vram_depth_20261121_215044.csv](reports/gpu_vram_depth_20261121_215044.csv) | 2 s VRAM samples across all depth runs (851 rows) |
