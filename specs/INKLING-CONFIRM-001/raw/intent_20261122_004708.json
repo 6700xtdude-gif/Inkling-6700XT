@@ -1,0 +1,33 @@
+{
+  "spec_id": "INKLING-CONFIRM-001",
+  "spec_version": "1",
+  "spec_sha256": "63A0427112CF389AC1E50FD3B9F55CE059CD652D5EB2A1E9E2E7E6DF970EC657",
+  "created": "2026-11-22T00:47:08.481579-06:00",
+  "dry_run": true,
+  "question": "Does Q3 remain faster and lighter than Q4 after the 22:37 binary swap?",
+  "checks": [
+    {
+      "check": "engine_exists",
+      "ok": true,
+      "path": "C:/llama.cpp/llama-bench.exe"
+    },
+    {
+      "check": "engine_sha256",
+      "ok": true,
+      "expected": "D9AADBA13D0EA58330C45AA0F96A107F75E06B037F58D06745C35DF4B918C6C3",
+      "actual": "D9AADBA13D0EA58330C45AA0F96A107F75E06B037F58D06745C35DF4B918C6C3"
+    },
+    {
+      "check": "model_sha256:Q4",
+      "ok": true,
+      "expected": "E64276656F072E9B2197A61723667CBDB71DA66A716FFD966E572C21088F3CD3",
+      "actual": "E64276656F072E9B2197A61723667CBDB71DA66A716FFD966E572C21088F3CD3"
+    },
+    {
+      "check": "model_sha256:Q3",
+      "ok": true,
+      "expected": "E2D03E8C92AC21CFF0E3309B95F40DFD27D1825184F0D2BC09DB249797273639",
+      "actual": "E2D03E8C92AC21CFF0E3309B95F40DFD27D1825184F0D2BC09DB249797273639"
+    }
+  ]
+}
